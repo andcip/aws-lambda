@@ -9,6 +9,7 @@ variable "lambda_handler" {
   type = string
 }
 variable "exclude_files" {
+  default = []
   type = list(string)
 }
 
@@ -22,7 +23,7 @@ variable "memory_size" {
   type = number
   validation {
     condition = var.memory_size == 128 || var.memory_size == 256 || var.memory_size == 512 || var.memory_size == 1024
-    error_message = "Invalid memory size, allowed values are 128, 256, 512, 1024"
+    error_message = "Invalid memory size, allowed values are 128, 256, 512, 1024."
   }
 }
 variable "timeout" {
@@ -52,7 +53,7 @@ variable "trigger" {
   })
   validation {
     condition = var.trigger == null || var.trigger.s3 != null || var.trigger.apigateway != null || var.trigger.alb != null
-    error_message = "Invalid trigger variable, s3 or apigateway pr alb have to be not null"
+    error_message = "S3 or apigateway pr alb have to be not null."
   }
 }
 
@@ -60,7 +61,7 @@ variable "tracing_mode" {
   type = string
   validation {
     condition = var.tracing_mode == null || var.tracing_mode == "Active" || var.tracing_mode == "PassThrough"
-    error_message = "Invalid tracing mode, allowed values are Active and PassThrough"
+    error_message = "Allowed values are Active and PassThrough."
   }
 }
 

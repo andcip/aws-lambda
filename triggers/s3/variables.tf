@@ -12,6 +12,6 @@ variable "trigger" {
 
   validation {
     condition = var.trigger == null || var.trigger.bucket != null && length(var.trigger.events) > 0
-    error_message = "Invalid trigger variable, bucket and events variables must be not null"
+    error_message = "Invalid trigger variable, bucket and events variables must be not null."
   }
 }

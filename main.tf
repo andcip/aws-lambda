@@ -5,8 +5,7 @@
 data "aws_subnet" "private_subnets" {
   filter {
     name = "tag:Type"
-    values = [
-      "Private"]
+    values = ["Private"]
   }
 }
 
@@ -54,8 +53,8 @@ resource "aws_lambda_function" "function" {
 
   runtime = var.lambda_runtime
   handler = var.lambda_handler
-  role = aws_iam_role.lambda_exec.arn
   //TODO role but permission in input
+  role = aws_iam_role.lambda_exec.arn
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
   s3_key = aws_s3_bucket_object.lambda_zip.key
@@ -78,18 +77,20 @@ resource "aws_lambda_function" "function" {
     }
   }
 
-  # TODO get this variables from ssm or in input?
   dynamic "vpc_config" {
-    for_each = var.vpc_subnet_ids != null && var.vpc_security_group_ids != null ? [
-      true] : []
+    for_each = var.vpc ? [true] : []
     content {
-      security_group_ids = var.vpc_security_group_ids
-      subnet_ids = var.vpc_subnet_ids
+      security_group_ids = [aws_security_group.lambda_security_group.id]
+      subnet_ids = data.aws_subnet.private_subnets.*.id
     }
   }
 
   tags = var.tags
 
+}
+
+resource "aws_security_group" "lambda_security_group" {
+  count = var.vpc ? 1 : 0
 }
 
 resource "aws_cloudwatch_log_group" "lambda_log_group" {
