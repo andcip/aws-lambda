@@ -28,8 +28,7 @@ resource "aws_apigatewayv2_stage" "stage" {
       status = "$context.status"
       responseLength = "$context.responseLength"
       integrationErrorMessage = "$context.integrationErrorMessage"
-    }
-    )
+    })
   }
 }
 
@@ -60,7 +59,7 @@ resource "aws_cloudwatch_log_group" "apigateway_log_group" {
   retention_in_days = var.log_retention
 }
 
-resource "aws_lambda_permission" "api_gw" {
+resource "aws_lambda_permission" "api_gw_lambda_invoke_permission" {
 
   count = var.trigger != null ? 1 : 0
   statement_id = "AllowExecutionFromAPIGateway"

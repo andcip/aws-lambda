@@ -74,3 +74,12 @@ variable "environment" {
   type = string
   default = "develop"
 }
+
+variable "iam_policies" {
+  type = list(object({
+    actions = list(string),
+    principal = string,
+    resource = string
+  }))
+
+}
