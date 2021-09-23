@@ -204,6 +204,7 @@ resource "aws_cloudwatch_log_group" "lambda_log_group" {
 
 ## S3
 module "trigger_s3" {
+  count = var.trigger.s3 != null ? 1 : 0
   source = "./triggers/s3"
   lambda_function_arn = aws_lambda_function.function.arn
   lambda_function_name = aws_lambda_function.function.function_name
@@ -211,10 +212,11 @@ module "trigger_s3" {
 }
 
 module "api_gateway" {
+  count = var.trigger.apigateway != null ? 1 : 0
   source = "./triggers/api-gateway"
   environment = var.environment
   lambda_function_invoke_arn = aws_lambda_function.function.invoke_arn
   lambda_function_name = var.lambda_name
-  timeout_milliseconds = var.timeout * 1000
+  timeout_milliseconds = var.timeout != null ? var.timeout * 1000 : null
   trigger = var.trigger.apigateway
 }
