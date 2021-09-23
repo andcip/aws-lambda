@@ -33,9 +33,11 @@ variable "timeout" {
 
 variable "environment_variables" {
   type = map(string)
+  default = {}
 }
 
 variable "trigger" {
+  default = null
   type = object({
     s3: object({
       bucket: string,
@@ -59,6 +61,7 @@ variable "trigger" {
 
 variable "tracing_mode" {
   type = string
+  default = null
   validation {
     condition = var.tracing_mode == null || var.tracing_mode == "Active" || var.tracing_mode == "PassThrough"
     error_message = "Allowed values are Active and PassThrough."
@@ -81,5 +84,11 @@ variable "iam_policies" {
     principal = string,
     resource = string
   }))
+  default = []
 
+}
+
+variable "vpc_id" {
+  type = string
+  default = null
 }

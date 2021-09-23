@@ -39,7 +39,7 @@ resource "aws_apigatewayv2_integration" "api_integration" {
 
   api_id = aws_apigatewayv2_api.api[count.index].id
   integration_uri = var.lambda_function_invoke_arn
-  timeout_milliseconds = var.timeout
+  timeout_milliseconds = var.timeout_milliseconds
   integration_type = "AWS_PROXY"
   integration_method = "POST"
 }

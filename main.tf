@@ -100,7 +100,7 @@ EOF
 }
 
 resource "aws_iam_policy" "function_policy" {
-  count = var.iam_policies
+  count = length(var.iam_policies)
   name = "${var.lambda_name}_function_policy_${count.index}"
   policy = jsonencode({
     Version = "2012-10-17"
@@ -117,14 +117,8 @@ resource "aws_iam_policy" "function_policy" {
 
 
 data "aws_iam_policy" "vpc_access_policy" {
-  count = var.vpc != null ? 1 : 0
+  count = var.vpc_id != null ? 1 : 0
   arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-}
-
-resource "aws_iam_role_policy_attachment" "vpc_policy_attachment" {
-  count = var.vpc != null ? 1 : 0
-  role = aws_iam_role.function_role.name
-  policy_arn = data.aws_iam_policy.vpc_access_policy.arn
 }
 
 ## DA PROVARE
@@ -133,10 +127,16 @@ data "aws_iam_policy" "xray_enable_policy" {
   arn = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "xray_policy_attachment" {
+  count = var.vpc_id != null ? 1 : 0
+  role = aws_iam_role.function_role.name
+  policy_arn = data.aws_iam_policy.xray_enable_policy[count.index].arn
+}
+
 resource "aws_iam_role_policy_attachment" "vpc_policy_attachment" {
   count = var.tracing_mode != null ? 1 : 0
   role = aws_iam_role.function_role.name
-  policy_arn = data.aws_iam_policy.xray_enable_policy.arn
+  policy_arn = data.aws_iam_policy.vpc_access_policy[count.index].arn
 }
 
 
