@@ -98,7 +98,10 @@ variable "iam_policies" {
 
 }
 
-variable "vpc_id" {
-  type = string
+variable "vpc_mode" {
+  type = object({
+    id: string,
+    subnet_ids: list(string)
+  })
   default = null
 }

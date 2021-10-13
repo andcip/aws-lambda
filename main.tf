@@ -5,20 +5,6 @@
 data "aws_caller_identity" "current" {}
 
 
-data "aws_subnet" "private_subnets" {
-  count = var.vpc_id != null ? 1 : 0
-  vpc_id = var.vpc_id
-  filter {
-    name = "tag:Type"
-    values = ["Private"]
-  }
-}
-
-data "aws_vpc" "vpc" {
-  count = var.vpc_id != null ? 1 : 0
-  id = var.vpc_id
-}
-
 resource "aws_s3_bucket" "lambda_bucket" {
   bucket = "${var.lambda_name}-lambda"
   acl = "private"
@@ -117,7 +103,7 @@ resource "aws_iam_policy" "function_policy" {
 
 
 data "aws_iam_policy" "vpc_access_policy" {
-  count = var.vpc_id != null ? 1 : 0
+  count = var.vpc_mode != null ? 1 : 0
   arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
@@ -128,7 +114,7 @@ data "aws_iam_policy" "xray_enable_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "xray_policy_attachment" {
-  count = var.vpc_id != null ? 1 : 0
+  count = var.vpc_mode != null ? 1 : 0
   role = aws_iam_role.function_role.name
   policy_arn = data.aws_iam_policy.xray_enable_policy[count.index].arn
 }
@@ -177,10 +163,10 @@ resource "aws_lambda_function" "function" {
 
   # TODO get only vpc id
   dynamic "vpc_config" {
-    for_each = var.vpc_id == null ? [] : [true]
+    for_each = var.vpc_mode == null ? [] : [true]
     content {
       security_group_ids = [aws_security_group.lambda_security_group.id]
-      subnet_ids = data.aws_subnet.private_subnets[0].*.id
+      subnet_ids = var.vpc_mode.subnet_ids
     }
   }
 
@@ -189,8 +175,8 @@ resource "aws_lambda_function" "function" {
 }
 
 resource "aws_security_group" "lambda_security_group" {
-  count = var.vpc_id != null ? 1 : 0
-  vpc_id = var.vpc_id
+  count = var.vpc_mode != null ? 1 : 0
+  vpc_id = var.vpc_mode.id
 }
 
 resource "aws_cloudwatch_log_group" "lambda_log_group" {
