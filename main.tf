@@ -25,10 +25,10 @@ resource "aws_s3_bucket" "lambda_bucket" {
 
 data "archive_file" "files" {
   type = "zip"
-  output_path = "${path.module}/lambda.zip"
-  excludes = [for file in var.exclude_files : "${path.module}/${file}"]
+  output_path = "${path.root}/lambda.zip"
+  excludes = [for file in var.exclude_files : "${path.root}/${file}"]
 
-  source_dir = "${path.module}/"
+  source_dir = "${path.root}/src"
 }
 
 resource "aws_s3_bucket_object" "lambda_zip" {
