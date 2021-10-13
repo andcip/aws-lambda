@@ -34,7 +34,7 @@ data "archive_file" "files" {
 resource "aws_s3_bucket_object" "lambda_zip" {
 
   bucket = aws_s3_bucket.lambda_bucket.id
-  key = "${var.lambda_name}.zip"
+  key = "${var.lambda_name}"
   source = data.archive_file.files.output_path
 
   etag = filemd5(data.archive_file.files.output_path)
@@ -148,7 +148,6 @@ resource "aws_lambda_function" "function" {
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
   s3_key = aws_s3_bucket_object.lambda_zip.key
-
   source_code_hash = data.archive_file.files.output_base64sha256
 
   dynamic "environment" {
