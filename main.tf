@@ -4,8 +4,10 @@
 
 data "aws_caller_identity" "current" {}
 
-resource "random_string" "bucket_salt" {
+resource "random_integer" "bucket_salt" {
   length = 10
+  max = 9999999999
+  min = 1000000000
 }
 
 resource "aws_s3_bucket" "lambda_bucket" {
