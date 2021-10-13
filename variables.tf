@@ -64,7 +64,7 @@ variable "trigger" {
 
   })
   validation {
-    condition = var.trigger == null || var.trigger.s3 != null || var.trigger.apigateway != null || var.trigger.alb != null
+    condition = var.trigger == null || (var.trigger.s3 != null || var.trigger.apigateway != null || var.trigger.alb != null)
     error_message = "S3 or apigateway pr alb have to be not null."
   }
 }
