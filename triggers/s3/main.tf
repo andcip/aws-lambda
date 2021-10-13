@@ -4,7 +4,7 @@ data "aws_s3_bucket" "trigger_source_bucket" {
 
 resource "aws_s3_bucket_notification" "s3_bucket_action_trigger" {
 
-  bucket = data.aws_s3_bucket.trigger_source_bucket[count.index].id
+  bucket = data.aws_s3_bucket.trigger_source_bucket.id
   lambda_function {
     lambda_function_arn = var.lambda_function_arn
     events              = var.trigger.events
@@ -19,5 +19,5 @@ resource "aws_lambda_permission" "allow_bucket" {
   action        = "lambda:InvokeFunction"
   function_name = var.lambda_function_name
   principal     = "s3.amazonaws.com"
-  source_arn    = data.aws_s3_bucket.trigger_source_bucket[count.index].arn
+  source_arn    = data.aws_s3_bucket.trigger_source_bucket.arn
 }

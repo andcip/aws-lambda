@@ -153,7 +153,7 @@ resource "aws_lambda_function" "function" {
 
   runtime = var.lambda_runtime
   handler = var.lambda_handler
-
+  architectures = [var.architecture]
   role = aws_iam_role.function_role.arn
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id

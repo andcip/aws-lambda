@@ -13,6 +13,16 @@ variable "exclude_files" {
   type = list(string)
 }
 
+variable "architecture" {
+  type = string
+  default = "x86_64"
+
+  validation {
+    condition = var.architecture == "x86_64" ||  var.architecture == "arm64"
+    error_message = "Invalid architecture, allowed values x86_64 or arm64."
+  }
+}
+
 variable "tags" {
   type = object({})
   default = {}
