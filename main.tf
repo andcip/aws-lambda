@@ -4,9 +4,12 @@
 
 data "aws_caller_identity" "current" {}
 
+resource "random_string" "bucket_salt" {
+  length = 10
+}
 
 resource "aws_s3_bucket" "lambda_bucket" {
-  bucket = "${var.lambda_name}-lambda"
+  bucket = "${var.lambda_name}-lambdaform-bucket-${random_string.bucket_salt.result}"
   acl = "private"
   force_destroy = true
   server_side_encryption_configuration {
@@ -198,6 +201,7 @@ module "trigger_s3" {
 }
 
 module "api_gateway" {
+  depends_on = [aws_lambda_function.function]
   count = var.trigger.apigateway != null ? 1 : 0
   source = "./triggers/api-gateway"
   environment = var.environment
