@@ -6,9 +6,10 @@ resource "aws_api_gateway_rest_api" "api" {
 }
 
 resource "aws_api_gateway_deployment" "deployment" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
 
-  triggers = {
+  depends_on  = [aws_api_gateway_method.api_method.*, aws_api_gateway_resource.api_resource.*]
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  triggers    = {
     redeployment = sha1(jsonencode(aws_api_gateway_rest_api.api.body))
   }
 
