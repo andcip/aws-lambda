@@ -1,6 +1,9 @@
 variable "trigger" {
   type = object({
-    routes: list(string)
+    routes: list(object({
+      path: string,
+      method: string
+    }))
   })
 
   validation {

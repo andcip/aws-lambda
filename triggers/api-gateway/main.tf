@@ -1,15 +1,27 @@
 ## API GATEWAY
 
-resource "aws_apigatewayv2_api" "api" {
-  name          = "serverless_lambda_gw"
-  protocol_type = "HTTP"
+resource "aws_api_gateway_rest_api" "api" {
+  name = "asganawana" ##TODO VARIABLE
+  #api_key_source = "HEADER"
 }
 
-resource "aws_apigatewayv2_stage" "stage" {
+resource "aws_api_gateway_deployment" "deployment" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
 
-  api_id      = aws_apigatewayv2_api.api.id
-  name        = var.environment
-  auto_deploy = true
+  triggers = {
+    redeployment = sha1(jsonencode(aws_api_gateway_rest_api.api.body))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_api_gateway_stage" "stage" {
+
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  stage_name    = var.environment
+  deployment_id = aws_api_gateway_deployment.deployment.id
 
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.apigateway_log_group.arn
@@ -27,29 +39,38 @@ resource "aws_apigatewayv2_stage" "stage" {
       integrationErrorMessage = "$context.integrationErrorMessage"
     })
   }
+
 }
 
-
-resource "aws_apigatewayv2_integration" "api_integration" {
-
-  api_id               = aws_apigatewayv2_api.api.id
-  integration_uri      = var.lambda_function_invoke_arn
-  timeout_milliseconds = var.timeout_milliseconds
-  integration_type     = "AWS_PROXY"
-  integration_method   = "POST"
+resource "aws_api_gateway_integration" "integration" {
+  count                   = length(var.trigger.routes)
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.api_resource[count.index].id
+  http_method             = aws_api_gateway_method.api_method[count.index].http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = var.lambda_function_invoke_arn
 }
 
-resource "aws_apigatewayv2_route" "api_route" {
-
-  count     = length(var.trigger.routes)
-  api_id    = aws_apigatewayv2_api.api.id
-  route_key = var.trigger.routes[count.index]
-  target    = "integrations/${aws_apigatewayv2_integration.api_integration.id}"
+resource "aws_api_gateway_resource" "api_resource" {
+  count       = length(var.trigger.routes)
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
+  path_part   = var.trigger.routes[count.index].path
 }
+
+resource "aws_api_gateway_method" "api_method" {
+  count         = length(var.trigger.routes)
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.api_resource[count.index].id
+  http_method   = var.trigger.routes[count.index].method
+  authorization = "NONE"
+}
+
 
 resource "aws_cloudwatch_log_group" "apigateway_log_group" {
 
-  name              = "/aws/api_gw/${aws_apigatewayv2_api.api.name}"
+  name              = "/aws/api_gw/${aws_api_gateway_rest_api.api.name}"
   retention_in_days = var.log_retention
 }
 
@@ -60,5 +81,5 @@ resource "aws_lambda_permission" "api_gw_lambda_invoke_permission" {
   function_name = var.lambda_function_name
   principal     = "apigateway.amazonaws.com"
 
-  source_arn = "${aws_apigatewayv2_api.api.execution_arn}/*/*"
+  source_arn = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }

@@ -57,7 +57,10 @@ variable "trigger" {
     })
     #TODO apigateway triggerobejct
     apigateway: object({
-      routes: list(string)
+      routes: list(object({
+        path: string,
+        method: string
+      }))
     })
     #TODO alb trigger objejct
     alb: string
