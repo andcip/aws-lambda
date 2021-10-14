@@ -1,13 +1,13 @@
 ## API GATEWAY
 
 resource "aws_api_gateway_rest_api" "api" {
-  name = "asganawana" ##TODO VARIABLE
+  name = "${var.lambda_function_name}-api" ##TODO VARIABLE
   #api_key_source = "HEADER"
 }
 
 resource "aws_api_gateway_deployment" "deployment" {
 
-  depends_on  = [aws_api_gateway_method.api_method.*, aws_api_gateway_resource.api_resource.*]
+  depends_on  = [aws_api_gateway_method.api_method, aws_api_gateway_resource.api_resource]
   rest_api_id = aws_api_gateway_rest_api.api.id
   triggers    = {
     redeployment = sha1(jsonencode(aws_api_gateway_rest_api.api.body))

@@ -13,6 +13,11 @@ variable "exclude_files" {
   type = list(string)
 }
 
+variable "source_dir" {
+  type = string
+  default = "src"
+}
+
 variable "architecture" {
   type = string
   default = "x86_64"

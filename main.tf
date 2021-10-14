@@ -4,6 +4,8 @@
 
 data "aws_caller_identity" "current" {}
 
+data "aws_region" "current" {}
+
 resource "random_integer" "bucket_salt" {
   max = 9999999999
   min = 1000000000
@@ -26,15 +28,16 @@ resource "aws_s3_bucket" "lambda_bucket" {
 data "archive_file" "files" {
   type = "zip"
   output_path = "${path.root}/lambda.zip"
+
   excludes = [for file in var.exclude_files : "${path.root}/${file}"]
 
-  source_dir = "${path.root}/src"
+  source_dir = "${path.root}/${var.source_dir}"
 }
 
 resource "aws_s3_bucket_object" "lambda_zip" {
 
   bucket = aws_s3_bucket.lambda_bucket.id
-  key = "${var.lambda_name}"
+  key = "${var.lambda_name}.zip"
   source = data.archive_file.files.output_path
 
   etag = filemd5(data.archive_file.files.output_path)
@@ -81,7 +84,7 @@ resource "aws_iam_role_policy" "function_logging_policy" {
         "logs:PutLogEvents"
       ],
       "Resource": [
-        "arn:aws:logs::${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.lambda_name}:*"
+        "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.lambda_name}:*"
       ]
     }
   ]
@@ -164,7 +167,6 @@ resource "aws_lambda_function" "function" {
     }
   }
 
-  # TODO get only vpc id
   dynamic "vpc_config" {
     for_each = var.vpc_mode == null ? [] : [true]
     content {
