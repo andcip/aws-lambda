@@ -8,14 +8,14 @@ variable "lambda_function_name" {
 
 variable "trigger" {
   type = object({
-    bucket: string,
-    events: list(string),
-    filter_prefix: string,
-    filter_suffix: string
+    bucket : string,
+    events : list(string),
+    filter_prefix : string,
+    filter_suffix : string
   })
 
   validation {
-    condition = var.trigger == null || var.trigger.bucket != null && length(var.trigger.events) > 0 && var.trigger.bucket != null
+    condition     = var.trigger == null || var.trigger.bucket != null && length(var.trigger.events) > 0 && var.trigger.bucket != null
     error_message = "Invalid trigger variable, bucket and events variables must be not null."
   }
 }

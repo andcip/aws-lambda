@@ -12,8 +12,8 @@ resource "random_integer" "bucket_salt" {
 }
 
 resource "aws_s3_bucket" "lambda_bucket" {
-  bucket = "${var.lambda_name}-lambdaform-bucket-${random_integer.bucket_salt.result}"
-  acl = "private"
+  bucket        = "${var.lambda_name}-lambdaform-bucket-${random_integer.bucket_salt.result}"
+  acl           = "private"
   force_destroy = true
   server_side_encryption_configuration {
     rule {
@@ -26,7 +26,7 @@ resource "aws_s3_bucket" "lambda_bucket" {
 
 
 data "archive_file" "files" {
-  type = "zip"
+  type        = "zip"
   output_path = "${path.root}/lambda.zip"
 
   excludes = [for file in var.exclude_files : "${path.root}/${file}"]
@@ -37,14 +37,14 @@ data "archive_file" "files" {
 resource "aws_s3_bucket_object" "lambda_zip" {
 
   bucket = aws_s3_bucket.lambda_bucket.id
-  key = "${var.lambda_name}.zip"
+  key    = "${var.lambda_name}.zip"
   source = data.archive_file.files.output_path
 
   etag = filemd5(data.archive_file.files.output_path)
 }
 
 resource "aws_iam_role" "function_role" {
-  name = "${var.lambda_name}_iam_role"
+  name               = "${var.lambda_name}_iam_role"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -61,7 +61,7 @@ resource "aws_iam_role" "function_role" {
   ]
 }
 EOF
-  tags = var.tags
+  tags               = var.tags
 }
 
 resource "aws_iam_role_policy" "function_logging_policy" {
@@ -93,16 +93,16 @@ EOF
 }
 
 resource "aws_iam_policy" "function_policy" {
-  count = length(var.iam_policies)
-  name = "${var.lambda_name}_function_policy_${count.index}"
+  count  = length(var.iam_policies)
+  name   = "${var.lambda_name}_function_policy_${count.index}"
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
-        Actions = var.iam_policies[count.index].actions
-        Effect = "Allow"
+        Actions   = var.iam_policies[count.index].actions
+        Effect    = "Allow"
         Principal = var.iam_policies[count.index].principal
-        Resource = var.iam_policies[count.index].resource
+        Resource  = var.iam_policies[count.index].resource
       }
     ]
   })
@@ -111,24 +111,24 @@ resource "aws_iam_policy" "function_policy" {
 
 data "aws_iam_policy" "vpc_access_policy" {
   count = var.vpc_mode != null ? 1 : 0
-  arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+  arn   = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
 ## DA PROVARE
 data "aws_iam_policy" "xray_enable_policy" {
   count = var.tracing_mode != null ? 1 : 0
-  arn = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+  arn   = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "xray_policy_attachment" {
-  count = var.vpc_mode != null ? 1 : 0
-  role = aws_iam_role.function_role.name
+  count      = var.tracing_mode != null ? 1 : 0
+  role       = aws_iam_role.function_role.name
   policy_arn = data.aws_iam_policy.xray_enable_policy[count.index].arn
 }
 
 resource "aws_iam_role_policy_attachment" "vpc_policy_attachment" {
-  count = var.tracing_mode != null ? 1 : 0
-  role = aws_iam_role.function_role.name
+  count      = var.vpc_mode != null ? 1 : 0
+  role       = aws_iam_role.function_role.name
   policy_arn = data.aws_iam_policy.vpc_access_policy[count.index].arn
 }
 
@@ -141,16 +141,16 @@ resource "aws_lambda_function" "function" {
   ]
 
   function_name = var.lambda_name
-  memory_size = var.memory_size
-  timeout = var.timeout
+  memory_size   = var.memory_size
+  timeout       = var.timeout
 
-  runtime = var.lambda_runtime
-  handler = var.lambda_handler
+  runtime       = var.lambda_runtime
+  handler       = var.lambda_handler
   architectures = [var.architecture]
-  role = aws_iam_role.function_role.arn
+  role          = aws_iam_role.function_role.arn
 
-  s3_bucket = aws_s3_bucket.lambda_bucket.id
-  s3_key = aws_s3_bucket_object.lambda_zip.key
+  s3_bucket        = aws_s3_bucket.lambda_bucket.id
+  s3_key           = aws_s3_bucket_object.lambda_zip.key
   source_code_hash = data.archive_file.files.output_base64sha256
 
   dynamic "environment" {
@@ -170,8 +170,8 @@ resource "aws_lambda_function" "function" {
   dynamic "vpc_config" {
     for_each = var.vpc_mode == null ? [] : [true]
     content {
-      security_group_ids = [aws_security_group.lambda_security_group.id]
-      subnet_ids = var.vpc_mode.subnet_ids
+      security_group_ids = [aws_security_group.lambda_security_group[0].id]
+      subnet_ids         = var.vpc_mode.subnet_ids
     }
   }
 
@@ -180,35 +180,46 @@ resource "aws_lambda_function" "function" {
 }
 
 resource "aws_security_group" "lambda_security_group" {
-  count = var.vpc_mode != null ? 1 : 0
+  count  = var.vpc_mode != null ? 1 : 0
   vpc_id = var.vpc_mode.id
 }
 
 resource "aws_cloudwatch_log_group" "lambda_log_group" {
 
-  name = "/aws/lambda/${var.lambda_name}"
+  name              = "/aws/lambda/${var.lambda_name}"
   retention_in_days = var.log_retention
-  tags = var.tags
+  tags              = var.tags
 }
 
 ## TRIGGERS
 
 ## S3
 module "trigger_s3" {
-  count = var.trigger.s3 != null ? 1 : 0
-  source = "./triggers/s3"
-  lambda_function_arn = aws_lambda_function.function.arn
+  count                = var.trigger.s3 != null ? 1 : 0
+  source               = "./triggers/s3"
+  lambda_function_arn  = aws_lambda_function.function.arn
   lambda_function_name = aws_lambda_function.function.function_name
-  trigger = var.trigger.s3
+  trigger              = var.trigger.s3
 }
 
-module "api_gateway" {
-  depends_on = [aws_lambda_function.function]
-  count = var.trigger.apigateway != null ? 1 : 0
-  source = "./triggers/api-gateway"
-  environment = var.environment
+module "trigger_rest" {
+  depends_on                 = [aws_lambda_function.function]
+  count                      = var.trigger.apigateway != null && var.trigger.apigateway.type == "REST" ? 1 : 0
+  source                     = "./triggers/rest"
+  environment                = var.environment
   lambda_function_invoke_arn = aws_lambda_function.function.invoke_arn
-  lambda_function_name = var.lambda_name
-  timeout_milliseconds = var.timeout != null ? var.timeout * 1000 : null
-  trigger = var.trigger.apigateway
+  lambda_function_name       = var.lambda_name
+  timeout_milliseconds       = var.timeout != null ? var.timeout * 1000 : null
+  trigger                    = var.trigger.apigateway
+}
+
+module "trigger_http" {
+  depends_on                 = [aws_lambda_function.function]
+  count                      = var.trigger.apigateway != null && var.trigger.apigateway.type == "HTTP" ? 1 : 0
+  source                     = "./triggers/http"
+  environment                = var.environment
+  lambda_function_invoke_arn = aws_lambda_function.function.invoke_arn
+  lambda_function_name       = var.lambda_name
+  timeout_milliseconds       = var.timeout != null ? var.timeout * 1000 : null
+  trigger                    = var.trigger.apigateway
 }
