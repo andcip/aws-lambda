@@ -1,3 +1,8 @@
+
+terraform {
+  experiments = [module_variable_optional_attrs]
+}
+
 variable "lambda_name" {
   type = string
 }
@@ -54,28 +59,33 @@ variable "environment_variables" {
 variable "trigger" {
   default = null
   type    = object({
-    s3 : object({
+    s3 : optional(object({
       bucket : string,
       events : list(string),
       filter_prefix : string,
       filter_suffix : string
-    })
-    apigateway : object({
+    }))
+    apigateway : optional(object({
       type : string,
+      authorizer: optional(object({
+        name: string,
+        identity_source: string,
+        jwt: optional(object({
+          aud: list(string),
+          issuer: string
+        }))
+      }))
       routes : list(object({
         path : string,
-        method : string
+        method : string,
+        authorizer: optional(bool)
       }))
-    })
+    }))
     #TODO alb trigger objejct
-    alb : string
+    alb : optional(string)
 
   })
 
-  validation {
-    condition     = var.trigger == null || (var.trigger.s3 != null || var.trigger.apigateway != null || var.trigger.alb != null)
-    error_message = "S3 or apigateway pr alb have to be not null."
-  }
 }
 
 variable "tracing_mode" {
