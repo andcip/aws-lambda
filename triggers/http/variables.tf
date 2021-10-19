@@ -4,6 +4,7 @@ terraform {
 
 variable "trigger" {
   type = object({
+    existing_api_id: optional(string)
     authorizer : optional(object({
       name : string,
       identity_source : string,
