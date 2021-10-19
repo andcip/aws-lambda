@@ -54,16 +54,6 @@ resource "aws_apigatewayv2_integration" "api_integration" {
   integration_method   = "POST"
 }
 
-/*resource "aws_lambda_permission" "authorizer_permission" {
-
-  count         = var.trigger.authorizer != null ? 1 : 0
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = var.trigger.authorizer.name
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "arn:aws:execute-api:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:api-id/authorizers/${aws_apigatewayv2_authorizer.authorizer[0].id}"
-}*/
-
 resource "aws_iam_role" "authorizer_invocation_role" {
   count = var.trigger.authorizer != null ? 1 : 0
   name  = "authorizer_api_gateway_role"
