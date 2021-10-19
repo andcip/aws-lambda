@@ -95,7 +95,7 @@ EOF
 resource "aws_apigatewayv2_authorizer" "authorizer" {
   count                             = var.trigger.authorizer != null ? 1 : 0
   api_id                            = aws_apigatewayv2_api.api.id
-  authorizer_type                   = var.trigger.authorizer == null ? "JWT" : "REQUEST"
+  authorizer_type                   = var.trigger.authorizer.jwt == null ? "REQUEST" : "JWT"
   name                              = var.trigger.authorizer.name
   identity_sources                  = [var.trigger.authorizer.identity_source]
   authorizer_uri                    = "arn:aws:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/arn:aws:lambda:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:function:${var.trigger.authorizer.name}/invocations"
