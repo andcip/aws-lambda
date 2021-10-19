@@ -67,6 +67,7 @@ variable "trigger" {
     }))
     apigateway : optional(object({
       type : string,
+      existing_api_id: optional(string)
       authorizer: optional(object({
         name: string,
         identity_source: string,

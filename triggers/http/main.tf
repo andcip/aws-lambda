@@ -2,14 +2,27 @@ data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
 
+data "aws_apigatewayv2_api" "existing_api" {
+  count  = var.trigger.existing_api_id != null ? 1 : 0
+  api_id = var.trigger.existing_api_id
+}
+
 resource "aws_apigatewayv2_api" "api" {
+  count         = var.trigger.existing_api_id != null ? 0 : 1
   name          = "${var.lambda_function_name}-api"
   protocol_type = "HTTP"
 }
 
+locals {
+  api_id = var.trigger.existing_api_id != null ? var.trigger.existing_api_id : aws_apigatewayv2_api.api[0].id
+  api_execution_arn = var.trigger.existing_api_id != null ? data.aws_apigatewayv2_api.existing_api[0].execution_arn : aws_apigatewayv2_api.api[0].execution_arn
+  api_name =  var.trigger.existing_api_id != null ? data.aws_apigatewayv2_api.existing_api[0].name : aws_apigatewayv2_api.api[0].name
+}
+
+
 resource "aws_apigatewayv2_stage" "stage" {
 
-  api_id      = aws_apigatewayv2_api.api.id
+  api_id      = local.api_id
   name        = var.environment
   auto_deploy = true
 
@@ -34,7 +47,7 @@ resource "aws_apigatewayv2_stage" "stage" {
 
 resource "aws_apigatewayv2_integration" "api_integration" {
 
-  api_id               = aws_apigatewayv2_api.api.id
+  api_id               = local.api_id
   integration_uri      = var.lambda_function_invoke_arn
   timeout_milliseconds = var.timeout_milliseconds
   integration_type     = "AWS_PROXY"
@@ -94,7 +107,7 @@ EOF
 
 resource "aws_apigatewayv2_authorizer" "authorizer" {
   count                             = var.trigger.authorizer != null ? 1 : 0
-  api_id                            = aws_apigatewayv2_api.api.id
+  api_id                            = local.api_id
   authorizer_type                   = var.trigger.authorizer.jwt == null ? "REQUEST" : "JWT"
   name                              = var.trigger.authorizer.name
   identity_sources                  = [var.trigger.authorizer.identity_source]
@@ -118,7 +131,7 @@ locals {
 resource "aws_apigatewayv2_route" "api_route" {
 
   count              = length(var.trigger.routes)
-  api_id             = aws_apigatewayv2_api.api.id
+  api_id             = local.api_id
   authorization_type = try(var.trigger.authorizer != null && var.trigger.routes[count.index].authorizer, false) ? local.auth_type : "NONE"
   authorizer_id      = try(var.trigger.authorizer != null && var.trigger.routes[count.index].authorizer, false) ? aws_apigatewayv2_authorizer.authorizer[0].id : null
   route_key          = "${var.trigger.routes[count.index].method} ${var.trigger.routes[count.index].path}"
@@ -127,7 +140,7 @@ resource "aws_apigatewayv2_route" "api_route" {
 
 resource "aws_cloudwatch_log_group" "apigateway_log_group" {
 
-  name              = "/aws/api_gw/${aws_apigatewayv2_api.api.name}"
+  name              = "/aws/api_gw/${local.api_name}"
   retention_in_days = var.log_retention
 }
 
@@ -138,5 +151,5 @@ resource "aws_lambda_permission" "api_gw_lambda_invoke_permission" {
   function_name = var.lambda_function_name
   principal     = "apigateway.amazonaws.com"
 
-  source_arn = "${aws_apigatewayv2_api.api.execution_arn}/*/*"
+  source_arn = "${local.api_execution_arn}/*/*"
 }
