@@ -195,16 +195,17 @@ resource "aws_cloudwatch_log_group" "lambda_log_group" {
 
 ## S3
 module "trigger_s3" {
-  count                = var.trigger.s3 != null ? 1 : 0
+  count                = try(var.trigger.s3 != null ? 1 : 0, 0)
   source               = "./triggers/s3"
   lambda_function_arn  = aws_lambda_function.function.arn
   lambda_function_name = aws_lambda_function.function.function_name
   trigger              = var.trigger.s3
 }
 
+## REST
 module "trigger_rest" {
   depends_on                 = [aws_lambda_function.function]
-  count                      = var.trigger.apigateway != null && var.trigger.apigateway.type == "REST" ? 1 : 0
+  count                      = try (var.trigger.apigateway.type == "REST" ? 1 : 0, 0)
   source                     = "./triggers/rest"
   environment                = var.environment
   lambda_function_invoke_arn = aws_lambda_function.function.invoke_arn
@@ -213,9 +214,10 @@ module "trigger_rest" {
   trigger                    = var.trigger.apigateway
 }
 
+## HTTP
 module "trigger_http" {
   depends_on                 = [aws_lambda_function.function]
-  count                      = var.trigger.apigateway != null && var.trigger.apigateway.type == "HTTP" ? 1 : 0
+  count                      = try(var.trigger.apigateway.type == "HTTP" ? 1 : 0, 0)
   source                     = "./triggers/http"
   environment                = var.environment
   lambda_function_invoke_arn = aws_lambda_function.function.invoke_arn

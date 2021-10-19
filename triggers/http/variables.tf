@@ -1,13 +1,26 @@
+terraform {
+  experiments = [module_variable_optional_attrs]
+}
+
 variable "trigger" {
   type = object({
+    authorizer : optional(object({
+      name : string,
+      identity_source : string,
+      jwt : optional(object({
+        aud : list(string),
+        issuer : string
+      }))
+    }))
     routes : list(object({
       path : string,
-      method : string
+      method : string,
+      authorizer: optional(bool)
     }))
   })
 
   validation {
-    condition     = var.trigger == null || var.trigger.routes != null && length(var.trigger.routes) > 0
+    condition     = length(var.trigger.routes) > 0
     error_message = "Invalid trigger variable, routes length must be > 0."
   }
 }
