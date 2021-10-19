@@ -68,6 +68,13 @@ variable "trigger" {
     apigateway : optional(object({
       type : string,
       existing_api_id: optional(string)
+      disable_test_endpoint: optional(bool)
+      cors_configuration: optional(object({
+        allow_headers : set(string)
+        allow_method : set(string)
+        allow_origins: set(string)
+        max_age: number
+      }))
       authorizer: optional(object({
         name: string,
         identity_source: string,

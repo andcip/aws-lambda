@@ -11,6 +11,16 @@ resource "aws_apigatewayv2_api" "api" {
   count         = var.trigger.existing_api_id != null ? 0 : 1
   name          = "${var.lambda_function_name}-api"
   protocol_type = "HTTP"
+  disable_execute_api_endpoint = var.trigger.disable_test_endpoint == null ? false : var.trigger.disable_test_endpoint
+  dynamic "cors_configuration" {
+    for_each = var.trigger.cors_configuration == null ? [] : [true]
+    content {
+      allow_headers = var.trigger.cors_configuration.allow_headers
+      allow_methods = var.trigger.cors_configuration.allow_method
+      allow_origins = var.trigger.cors_configuration.allow_origins
+      max_age       = var.trigger.cors_configuration.max_age
+    }
+  }
 }
 
 locals {

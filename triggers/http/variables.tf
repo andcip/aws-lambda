@@ -5,6 +5,13 @@ terraform {
 variable "trigger" {
   type = object({
     existing_api_id: optional(string)
+    disable_test_endpoint: optional(bool)
+    cors_configuration: optional(object({
+      allow_headers : set(string)
+      allow_method : set(string)
+      allow_origins: set(string)
+      max_age: number
+    }))
     authorizer : optional(object({
       name : string,
       identity_source : string,
@@ -19,7 +26,6 @@ variable "trigger" {
       authorizer: optional(bool)
     }))
   })
-
   validation {
     condition     = length(var.trigger.routes) > 0
     error_message = "Invalid trigger variable, routes length must be > 0."
