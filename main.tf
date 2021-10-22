@@ -24,8 +24,13 @@ resource "aws_s3_bucket" "lambda_bucket" {
   }
 }
 
+locals {
+  source_zipped = length(regexall(".zip$", var.source_dir)) > 0
+}
+
 
 data "archive_file" "files" {
+  count = local.source_zipped ? 0 : 1
   type        = "zip"
   output_path = "${path.root}/lambda.zip"
 
@@ -38,7 +43,7 @@ resource "aws_s3_bucket_object" "lambda_zip" {
 
   bucket = aws_s3_bucket.lambda_bucket.id
   key    = "${var.lambda_name}.zip"
-  source = data.archive_file.files.output_path
+  source = local.source_zipped ? var.source_dir : data.archive_file.files.output_path
 
   etag = filemd5(data.archive_file.files.output_path)
 }
