@@ -60,6 +60,7 @@ resource "aws_apigatewayv2_integration" "api_integration" {
   api_id               = local.api_id
   integration_uri      = var.lambda_function_invoke_arn
   timeout_milliseconds = var.timeout_milliseconds
+  payload_format_version = "2.0"
   integration_type     = "AWS_PROXY"
   integration_method   = "POST"
 }
