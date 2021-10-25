@@ -26,7 +26,6 @@ resource "aws_s3_bucket" "lambda_bucket" {
 
 locals {
   source_zipped = length(regexall(".zip$", var.source_dir)) > 0
-  file_path = "${path.root}/${var.source_dir}"
 }
 
 
@@ -37,7 +36,7 @@ data "archive_file" "files" {
 
   excludes = [for file in var.exclude_files : "${path.root}/${file}"]
 
-  source_dir = local.file_path
+  source_dir = var.source_dir
 }
 
 resource "null_resource" "test" {
@@ -53,9 +52,9 @@ resource "aws_s3_bucket_object" "lambda_zip" {
 
   bucket = aws_s3_bucket.lambda_bucket.id
   key    = "${var.lambda_name}.zip"
-  source = local.source_zipped ? local.file_path : data.archive_file.files[0].output_path
+  source = local.source_zipped ? var.source_dir : data.archive_file.files[0].output_path
 
-  etag = local.source_zipped ? filemd5(local.file_path) : filemd5(data.archive_file.files[0].output_path)
+  etag = local.source_zipped ? filemd5(var.source_dir) : filemd5(data.archive_file.files[0].output_path)
 }
 
 resource "aws_iam_role" "function_role" {
@@ -166,7 +165,7 @@ resource "aws_lambda_function" "function" {
 
   s3_bucket        = aws_s3_bucket.lambda_bucket.id
   s3_key           = aws_s3_bucket_object.lambda_zip.key
-  source_code_hash = local.source_zipped ? filebase64sha256(local.file_path): data.archive_file.files[0].output_base64sha256
+  source_code_hash = local.source_zipped ? filebase64sha256(var.source_dir): data.archive_file.files[0].output_base64sha256
 
   dynamic "environment" {
     for_each = length(keys(var.environment_variables)) == 0 ? [] : [true]
