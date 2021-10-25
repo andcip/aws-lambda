@@ -45,7 +45,7 @@ resource "aws_s3_bucket_object" "lambda_zip" {
   key    = "${var.lambda_name}.zip"
   source = local.source_zipped ? var.source_dir : data.archive_file.files.output_path
 
-  etag = source_zipped ? md5(file(var.source_dir)) : filemd5(data.archive_file.files[0].output_path)
+  etag = source_zipped == true ? md5(file(var.source_dir)) : filemd5(data.archive_file.files[0].output_path)
 }
 
 resource "aws_iam_role" "function_role" {
