@@ -39,15 +39,6 @@ data "archive_file" "files" {
   source_dir = var.source_dir
 }
 
-resource "null_resource" "test" {
-  triggers = {
-    random = timestamp()
-  }
-  provisioner "remote-exec" {
-    inline = ["ls -a"]
-  }
-}
-
 resource "aws_s3_bucket_object" "lambda_zip" {
 
   bucket = aws_s3_bucket.lambda_bucket.id
