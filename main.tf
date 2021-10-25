@@ -46,7 +46,7 @@ resource "aws_s3_bucket_object" "lambda_zip" {
   key    = "${var.lambda_name}.zip"
   source = local.source_zipped ? local.file_path : data.archive_file.files[0].output_path
 
-  etag = local.source_zipped ? md5(file(local.file_path)) : filemd5(data.archive_file.files[0].output_path)
+  etag = local.source_zipped ? filemd5(local.file_path) : filemd5(data.archive_file.files[0].output_path)
 }
 
 resource "aws_iam_role" "function_role" {
@@ -157,7 +157,7 @@ resource "aws_lambda_function" "function" {
 
   s3_bucket        = aws_s3_bucket.lambda_bucket.id
   s3_key           = aws_s3_bucket_object.lambda_zip.key
-  source_code_hash = local.source_zipped ? base64sha256(file(local.file_path)): data.archive_file.files[0].output_base64sha256
+  source_code_hash = local.source_zipped ? filebase64sha256(local.file_path): data.archive_file.files[0].output_base64sha256
 
   dynamic "environment" {
     for_each = length(keys(var.environment_variables)) == 0 ? [] : [true]
