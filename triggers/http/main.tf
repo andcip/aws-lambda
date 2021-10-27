@@ -132,6 +132,7 @@ locals {
 resource "aws_apigatewayv2_route" "api_route" {
 
   count              = length(var.trigger.routes)
+  depends_on         = [try(var.trigger.authorizer != null && var.trigger.routes[count.index].authorizer, false) ? aws_apigatewayv2_authorizer.authorizer[0].id : null]
   api_id             = local.api_id
   authorization_type = try(var.trigger.authorizer != null && var.trigger.routes[count.index].authorizer, false) ? local.auth_type : "NONE"
   authorizer_id      = try(var.trigger.authorizer != null && var.trigger.routes[count.index].authorizer, false) ? aws_apigatewayv2_authorizer.authorizer[0].id : null
