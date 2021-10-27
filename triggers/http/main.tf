@@ -127,13 +127,11 @@ resource "aws_apigatewayv2_authorizer" "authorizer" {
 
 locals {
   auth_type = try(aws_apigatewayv2_authorizer.authorizer[0].authorizer_type == "REQUEST" ? "CUSTOM" : "JWT", "NONE")
-  route_depend = try(var.trigger.authorizer != null && var.trigger.routes[count.index].authorizer, false) ? aws_apigatewayv2_authorizer.authorizer[0] : null
 }
 
 resource "aws_apigatewayv2_route" "api_route" {
 
   count              = length(var.trigger.routes)
-  depends_on         = [local.route_depend]
   api_id             = local.api_id
   authorization_type = try(var.trigger.authorizer != null && var.trigger.routes[count.index].authorizer, false) ? local.auth_type : "NONE"
   authorizer_id      = try(var.trigger.authorizer != null && var.trigger.routes[count.index].authorizer, false) ? aws_apigatewayv2_authorizer.authorizer[0].id : null
