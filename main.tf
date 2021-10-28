@@ -212,7 +212,7 @@ module "trigger_rest" {
   depends_on                 = [aws_lambda_function.function]
   count                      = try (var.trigger.apigateway.type == "REST" ? 1 : 0, 0)
   source                     = "./triggers/rest"
-  environment                = var.environment
+  stage_name                = var.stage_name
   lambda_function_invoke_arn = aws_lambda_function.function.invoke_arn
   lambda_function_name       = var.lambda_name
   timeout_milliseconds       = var.timeout != null ? var.timeout * 1000 : null
@@ -224,7 +224,7 @@ module "trigger_http" {
   depends_on                 = [aws_lambda_function.function]
   count                      = try(var.trigger.apigateway.type == "HTTP" ? 1 : 0, 0)
   source                     = "./triggers/http"
-  environment                = var.environment
+  stage_name                = var.stage_name
   lambda_function_invoke_arn = aws_lambda_function.function.invoke_arn
   lambda_function_name       = var.lambda_name
   timeout_milliseconds       = var.timeout != null ? var.timeout * 1000 : null

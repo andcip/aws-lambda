@@ -110,9 +110,9 @@ variable "log_retention" {
   default = 90
 }
 
-variable "environment" {
+variable "stage_name" {
   type    = string
-  default = "develop"
+  default = "api"
 }
 
 variable "iam_policies" {

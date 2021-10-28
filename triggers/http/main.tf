@@ -33,7 +33,7 @@ locals {
 resource "aws_apigatewayv2_stage" "stage" {
 
   api_id      = local.api_id
-  name        = var.environment
+  name        = var.stage_name
   auto_deploy = true
 
   access_log_settings {

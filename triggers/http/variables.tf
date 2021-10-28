@@ -40,7 +40,7 @@ variable "lambda_function_name" {
   type = string
 }
 
-variable "environment" {
+variable "stage_name" {
   type = string
 }
 
