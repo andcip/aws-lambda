@@ -8,9 +8,9 @@ data "aws_apigatewayv2_api" "existing_api" {
 }
 
 resource "aws_apigatewayv2_api" "api" {
-  count         = var.trigger.existing_api_id != null ? 0 : 1
-  name          = "${var.lambda_function_name}-api"
-  protocol_type = "HTTP"
+  count                        = var.trigger.existing_api_id != null ? 0 : 1
+  name                         = "${var.lambda_function_name}-api"
+  protocol_type                = "HTTP"
   disable_execute_api_endpoint = var.trigger.disable_test_endpoint == null ? false : var.trigger.disable_test_endpoint
   dynamic "cors_configuration" {
     for_each = var.trigger.cors_configuration == null ? [] : [true]
@@ -24,15 +24,15 @@ resource "aws_apigatewayv2_api" "api" {
 }
 
 locals {
-  api_id = var.trigger.existing_api_id != null ? var.trigger.existing_api_id : aws_apigatewayv2_api.api[0].id
+  api_id            = var.trigger.existing_api_id != null ? var.trigger.existing_api_id : aws_apigatewayv2_api.api[0].id
   api_execution_arn = var.trigger.existing_api_id != null ? data.aws_apigatewayv2_api.existing_api[0].execution_arn : aws_apigatewayv2_api.api[0].execution_arn
-  api_name =  var.trigger.existing_api_id != null ? data.aws_apigatewayv2_api.existing_api[0].name : aws_apigatewayv2_api.api[0].name
+  api_name          = var.trigger.existing_api_id != null ? data.aws_apigatewayv2_api.existing_api[0].name : aws_apigatewayv2_api.api[0].name
 }
 
 
 resource "aws_apigatewayv2_stage" "stage" {
 
-  count         = var.trigger.existing_api_id != null ? 0 : 1
+  count       = var.trigger.existing_api_id != null ? 0 : 1
   api_id      = local.api_id
   name        = var.stage_name
   auto_deploy = true
@@ -58,12 +58,12 @@ resource "aws_apigatewayv2_stage" "stage" {
 
 resource "aws_apigatewayv2_integration" "api_integration" {
 
-  api_id               = local.api_id
-  integration_uri      = var.lambda_function_invoke_arn
-  timeout_milliseconds = var.timeout_milliseconds
+  api_id                 = local.api_id
+  integration_uri        = var.lambda_function_invoke_arn
+  timeout_milliseconds   = var.timeout_milliseconds
   payload_format_version = "2.0"
-  integration_type     = "AWS_PROXY"
-  integration_method   = "POST"
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
 }
 
 resource "aws_iam_role" "authorizer_invocation_role" {
@@ -142,6 +142,7 @@ resource "aws_apigatewayv2_route" "api_route" {
 
 resource "aws_cloudwatch_log_group" "apigateway_log_group" {
 
+  count             = var.trigger.existing_api_id != null ? 0 : 1
   name              = "/aws/api_gw/${local.api_name}"
   retention_in_days = var.log_retention
 }
