@@ -32,6 +32,7 @@ locals {
 
 resource "aws_apigatewayv2_stage" "stage" {
 
+  count         = var.trigger.existing_api_id != null ? 0 : 1
   api_id      = local.api_id
   name        = var.stage_name
   auto_deploy = true
