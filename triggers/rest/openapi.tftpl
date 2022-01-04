@@ -1,0 +1,35 @@
+openapi: "3.0.1"
+
+paths:
+    %{ for route in routes}
+    ${route.path}:
+        %{ if route.method != "ANY"}
+        ${ route.method }:
+        %{ endif }
+        %{ if route.parameter != ""}
+        parameters:
+        - name: ${route.parameter}
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+        %{ endif }
+        %{ if route.method == "ANY"}
+        x-amazon-apigateway-any-method:
+          responses:
+            default:
+              description: "Default response"
+          x-amazon-apigateway-integration:
+              payloadFormatVersion: "2.0"
+              type: "aws_proxy"
+              httpMethod: "POST"
+              uri: ${lambda_invoke_arn}
+          }
+        %{ else}
+        x-amazon-apigateway-integration:
+          payloadFormatVersion: "2.0"
+          type: "aws_proxy"
+          httpMethod: "POST"
+          uri: ${lambda_invoke_arn}
+        %{ endif }
+    %{ endfor }
