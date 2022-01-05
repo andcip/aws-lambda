@@ -7,7 +7,7 @@ locals {
   }]
 
 }
-
+##TODO add authorizer, api key, update module variable (how to attach to existing api id?)
 resource "aws_api_gateway_rest_api" "api" {
   name = "${var.lambda_function_name}-api"
 

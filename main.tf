@@ -30,7 +30,7 @@ locals {
 
 
 data "archive_file" "files" {
-  count = local.source_zipped ? 0 : 1
+  count       = local.source_zipped ? 0 : 1
   type        = "zip"
   output_path = "${path.root}/lambda.zip"
 
@@ -162,7 +162,7 @@ resource "aws_lambda_function" "function" {
   s3_key           = aws_s3_bucket_object.lambda_zip.key
   reserved_concurrent_executions = var.concurrent_execution
 
-  source_code_hash = local.source_zipped ? filebase64sha256(var.source_dir): data.archive_file.files[0].output_base64sha256
+  source_code_hash = local.source_zipped ? filebase64sha256(var.source_dir) : data.archive_file.files[0].output_base64sha256
 
   dynamic "environment" {
     for_each = length(keys(var.environment_variables)) == 0 ? [] : [true]
@@ -239,7 +239,7 @@ module "trigger_rest" {
   depends_on                 = [aws_lambda_function.function]
   count                      = try (var.trigger.apigateway.type == "REST" ? 1 : 0, 0)
   source                     = "./triggers/rest"
-  stage_name                = var.stage_name
+  stage_name                 = var.stage_name
   lambda_function_invoke_arn = aws_lambda_function.function.invoke_arn
   lambda_function_name       = var.lambda_name
   timeout_milliseconds       = var.timeout != null ? var.timeout * 1000 : null
@@ -251,7 +251,7 @@ module "trigger_http" {
   depends_on                 = [aws_lambda_function.function]
   count                      = try(var.trigger.apigateway.type == "HTTP" ? 1 : 0, 0)
   source                     = "./triggers/http"
-  stage_name                = var.stage_name
+  stage_name                 = var.stage_name
   lambda_function_invoke_arn = aws_lambda_function.function.invoke_arn
   lambda_function_name       = var.lambda_name
   timeout_milliseconds       = var.timeout != null ? var.timeout * 1000 : null
