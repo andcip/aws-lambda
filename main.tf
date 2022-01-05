@@ -113,6 +113,11 @@ resource "aws_iam_policy" "function_policy" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "function_policy_attach" {
+  count      = length(var.iam_policies)
+  role       = aws_iam_role.function_role.name
+  policy_arn = aws_iam_policy.function_policy[count.index].arn
+}
 
 data "aws_iam_policy" "vpc_access_policy" {
   count = var.vpc_mode != null ? 1 : 0
