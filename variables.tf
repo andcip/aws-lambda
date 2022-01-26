@@ -40,10 +40,16 @@ variable "architecture" {
   }
 }
 
+variable "concurrent_execution" {
+  type = number
+  default = -1
+  description = "Amount of reserved concurrent executions for this lambda function. A value of 0 disables lambda from being triggered and -1 removes any concurrency limitations. Defaults to Unreserved Concurrency Limits -1"
+}
+
 variable "memory_size" {
   default     = 128
   type        = number
-  description = "Memory size for the lambda, valid values are 128, 256, 512, 1024. Default 128."
+  description = " Amount of memory in MB your Lambda Function can use at runtime. Valid values are 128, 256, 512, 1024. Defaults to 128."
   validation {
     condition     = var.memory_size == 128 || var.memory_size == 256 || var.memory_size == 512 || var.memory_size == 1024
     error_message = "Invalid memory size, allowed values are 128, 256, 512, 1024."
@@ -52,13 +58,13 @@ variable "memory_size" {
 variable "timeout" {
   default     = 5
   type        = number
-  description = "The lambda timeout in seconds. Default 5."
+  description = "Amount of time your Lambda Function has to run in seconds. Defaults to 5."
 }
 
 variable "environment_variables" {
   type        = map(string)
   default     = {}
-  description = "Map of all lambda's environment variables"
+  description = "Map of environment variables that are accessible from the function code during execution."
 }
 
 variable "trigger" {

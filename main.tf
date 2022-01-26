@@ -161,6 +161,8 @@ resource "aws_lambda_function" "function" {
 
   s3_bucket        = aws_s3_bucket.lambda_bucket.id
   s3_key           = aws_s3_bucket_object.lambda_zip.key
+  reserved_concurrent_executions = var.concurrent_execution
+
   source_code_hash = local.source_zipped ? filebase64sha256(var.source_dir): data.archive_file.files[0].output_base64sha256
 
   dynamic "environment" {
