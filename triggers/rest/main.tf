@@ -35,6 +35,7 @@ resource "aws_api_gateway_stage" "stage" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
   stage_name    = var.stage_name
   deployment_id = aws_api_gateway_deployment.deployment.id
+  xray_tracing_enabled = var.tracing_enabled
 
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.apigateway_log_group.arn

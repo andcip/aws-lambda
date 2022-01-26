@@ -29,6 +29,12 @@ variable "log_retention" {
   default = 90
 }
 
+variable "tracing_enabled" {
+  type = bool
+  default = false
+  description = "Enable XRAY integration in Api Gateway stage"
+}
+
 variable "timeout_milliseconds" {
   type    = number
   default = 5000
