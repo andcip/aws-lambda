@@ -2,7 +2,7 @@ locals {
 
   api_routes = [for route in var.trigger.routes: {
     path: route.path
-    parameter: regexall( "{", route.path ) ? substr( route.path , index(split("", route.path), "{") +1, index(split("", route.path), "}") - index(split("", route.path), "{") -1) : ""
+    parameter: regexall( "{", route.path ) > 0 ? substr( route.path , index(split("", route.path), "{") +1, index(split("", route.path), "}") - index(split("", route.path), "{") -1) : ""
     method: route.method
   }]
 
