@@ -186,13 +186,35 @@ resource "aws_lambda_function" "function" {
       subnet_ids         = var.vpc_mode.subnet_ids
     }
   }
-
-
 }
 
 resource "aws_security_group" "lambda_security_group" {
   count  = var.vpc_mode != null ? 1 : 0
   vpc_id = var.vpc_mode.id
+
+  dynamic "ingress" {
+    for_each = try(var.vpc_mode.security_group.ingress == null ? [] : var.vpc_mode.security_group.ingress, [])
+    content {
+      description      = "Lambda sg"
+      from_port        = ingress.value.from_port
+      to_port          = ingress.value.to_port
+      protocol         = ingress.value.protocol
+      cidr_blocks      = try((ingress.value.cidr_blocks) > 0 ? ingress.value.cidr_blocks : [], [])
+      security_groups  = try((ingress.value.security_groups) > 0 ? ingress.value.security_groups : [], [])
+    }
+  }
+
+  dynamic "egress" {
+    for_each = try(var.vpc_mode.security_group.egress == null ? [] : var.vpc_mode.security_group.egress, [])
+    content {
+      description      = "Lambda sg"
+      from_port        = egress.value.from_port
+      to_port          = egress.value.to_port
+      protocol         = egress.value.protocol
+      cidr_blocks      = try(length(egress.value.cidr_blocks) > 0 ? egress.value.cidr_blocks : [], [])
+      security_groups  = try(length(egress.value.security_groups) > 0 ? egress.value.security_groups : [], [])
+    }
+  }
 }
 
 resource "aws_cloudwatch_log_group" "lambda_log_group" {

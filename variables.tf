@@ -147,6 +147,22 @@ variable "vpc_mode" {
   type        = object({
     id : string,
     subnet_ids : list(string)
+    security_group = optional(object({
+      ingress = optional(list(object({
+        from_port       = number
+        to_port         = number
+        protocol        = string
+        cidr_blocks     = optional(list(string))
+        security_groups = optional(list(string))
+      })))
+      egress = optional(list(object({
+        from_port       = number
+        to_port         = number
+        protocol        = string
+        cidr_blocks     = optional(list(string))
+        security_groups = optional(list(string))
+      })))
+    }))
   })
   default     = null
   description = "Use it to enable Lambda to run in VPC. Default disabled."
