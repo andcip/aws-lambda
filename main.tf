@@ -104,10 +104,9 @@ resource "aws_iam_policy" "function_policy" {
     Version   = "2012-10-17"
     Statement = [
       {
-        Actions   = var.iam_policies[count.index].actions
+        Action   = var.iam_policies[count.index].actions
         Effect    = "Allow"
-        Principal = var.iam_policies[count.index].principal
-        Resource  = var.iam_policies[count.index].resource
+        Resource  = var.iam_policies[count.index].resources
       }
     ]
   })

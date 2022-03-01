@@ -134,9 +134,8 @@ variable "stage_name" {
 
 variable "iam_policies" {
   type = list(object({
-    actions   = list(string),
-    principal = string,
-    resource  = string
+    actions    = list(string),
+    resources  = list(string)
   }))
 
   default     = []
