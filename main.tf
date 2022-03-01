@@ -106,7 +106,7 @@ resource "aws_iam_policy" "function_policy" {
       {
         Actions   = var.iam_policies[count.index].actions
         Effect    = "Allow"
-        Resource  = var.iam_policies[count.index].resource
+        Resource  = var.iam_policies[count.index].resources
       }
     ]
   })
