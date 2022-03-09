@@ -6,12 +6,12 @@ locals {
   api_routes = [for route in var.trigger.routes: {
     path: route.path
     parameter: length(regexall( "{", route.path )) > 0 ? substr( route.path , index(split("", route.path), "{") +1, index(split("", route.path), "}") - index(split("", route.path), "{") -1) : ""
-    method: route.method
+    method: lower(route.method)
   }]
 
   openAPI_spec = {
-    for path, method in local.api_routes : path => {
-      method = {
+    for route in local.api_routes : route.path => {
+        "${route.method}" = {
         x-amazon-apigateway-integration = {
           type       = "aws_proxy"
           httpMethod = "POST"
@@ -34,9 +34,6 @@ resource "aws_api_gateway_rest_api" "api" {
     paths   = local.openAPI_spec
   })
 
-  endpoint_configuration {
-    types = ["REGIONAL"]
-  }
 }
 
 resource "aws_api_gateway_deployment" "deployment" {
