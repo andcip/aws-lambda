@@ -1,3 +1,6 @@
+data "aws_region" "current" {}
+data "aws_caller_identity" "account" {}
+
 locals {
 
   api_routes = [for route in var.trigger.routes: {
@@ -6,12 +9,30 @@ locals {
     method: route.method
   }]
 
+  openAPI_spec = {
+    for path, method in local.api_routes : path => {
+      method = {
+        x-amazon-apigateway-integration = {
+          type       = "aws_proxy"
+          httpMethod = "POST"
+          uri        = var.lambda_function_invoke_arn
+        }
+      }
+    }
+  }
 }
+
 ##TODO add authorizer, api key, update module variable (how to attach to existing api id?)
 resource "aws_api_gateway_rest_api" "api" {
   name = "${var.lambda_function_name}-api"
 
-  body = templatefile("${path.module}/openapi.tftpl", {routes: local.api_routes, lambda_invoke_arn: var.lambda_function_invoke_arn})
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+  body = jsonencode({
+    openapi = "3.0.1"
+    paths   = local.openAPI_spec
+  })
 
   endpoint_configuration {
     types = ["REGIONAL"]
