@@ -1,0 +1,23 @@
+openapi: "3.0.1"
+
+%{ if }
+
+paths:
+    %{ for route in routes}
+        ${route.path}:
+            ${ route.method }:
+            %{ if route.parameter != ""}
+            parameters:
+            - name: ${route.parameter}
+              in: "path"
+              required: true
+              schema:
+                type: "string"
+            %{ endif }
+            x-amazon-apigateway-integration:
+                payloadFormatVersion: "2.0"
+                type: "aws_proxy"
+                httpMethod: "POST"
+                uri: ${lambda_invoke_arn}
+                timeoutInMillis: var.timeout_milliseconds
+    %{ endfor }
