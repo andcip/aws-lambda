@@ -3,10 +3,10 @@ data "aws_caller_identity" "account" {}
 
 locals {
 
-  api_routes = [for route in var.trigger.routes: {
+  api_routes = [ for route in var.trigger.routes: {
     path: route.path
     parameter: length(regexall( "{", route.path )) > 0 ? substr( route.path , index(split("", route.path), "{") +1, index(split("", route.path), "}") - index(split("", route.path), "{") -1) : ""
-    method: lower(route.method)
+    method: lower(route.method) ==  "any" ? "x-amazon-apigateway-any-method" : lower(route.method)
   }]
 
   openAPI_spec = {
@@ -16,6 +16,8 @@ locals {
           type       = "aws_proxy"
           httpMethod = "POST"
           uri        = var.lambda_function_invoke_arn
+          timeoutInMillis = var.timeout_milliseconds
+          payloadFormatVersion =  "2.0"
         }
       }
     }
@@ -33,6 +35,8 @@ resource "aws_api_gateway_rest_api" "api" {
     openapi = "3.0.1"
     paths   = local.openAPI_spec
   })
+  #   body = templatefile("${path.module}/openapi.tftpl", {routes: local.api_routes, lambda_invoke_arn: var.lambda_function_invoke_arn})
+
 
 }
 
