@@ -244,6 +244,7 @@ module "trigger_rest" {
   lambda_function_name       = var.lambda_name
   timeout_milliseconds       = var.timeout != null ? var.timeout * 1000 : null
   trigger                    = var.trigger.apigateway
+  tracing_enabled            = var.tracing_mode != null ? true : false
 }
 
 ## HTTP
