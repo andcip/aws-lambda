@@ -82,7 +82,7 @@ resource "aws_api_gateway_rest_api_policy" "resource_policy" {
   count = var.trigger.resource_policy != null ? 1 : 0
 
   rest_api_id = aws_api_gateway_rest_api.api.id
-  policy = jsonencode(var.trigger.resource_policy)
+  policy = var.trigger.resource_policy
 }
 
 
