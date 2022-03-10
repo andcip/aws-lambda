@@ -6,6 +6,7 @@ variable "trigger" {
   type = object({
     existing_api_id: optional(string)
     disable_test_endpoint: optional(bool)
+    resource_policy: optional(string)
     cors_configuration: optional(object({
       allow_headers : set(string)
       allow_method : set(string)
