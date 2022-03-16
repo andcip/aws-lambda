@@ -167,3 +167,9 @@ variable "vpc_mode" {
   default     = null
   description = "Use it to enable Lambda to run in VPC. Default disabled."
 }
+
+variable "alarm_topic" {
+  type = string
+  default = null
+  description = "Topic for alarms notification"
+}

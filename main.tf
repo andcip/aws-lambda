@@ -258,3 +258,19 @@ module "trigger_http" {
   timeout_milliseconds       = var.timeout != null ? var.timeout * 1000 : null
   trigger                    = var.trigger.apigateway
 }
+
+## Alarms
+resource "aws_cloudwatch_metric_alarm" "errors_count_alarm" {
+  count               = var.alarm_topic != null ? 1 : 0
+  alarm_name          = "${var.lambda_name}-errors-alarm"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = "120"
+  statistic           = "Sum"
+  threshold           = "1"
+  alarm_description   = "Lambda ${var.lambda_name} errors count"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [var.alarm_topic]
+}
