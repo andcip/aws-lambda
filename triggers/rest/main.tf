@@ -2,7 +2,7 @@ data "aws_region" "current" {}
 data "aws_caller_identity" "account" {}
 data "aws_iam_policy_document" "resource_policy" {
   count = try(var.trigger.resource_policy, null ) != null ? 1 : 0
-  source_json = jsonencode(var.trigger.resource_policy)
+  source_json = var.trigger.resource_policy
 }
 
 locals {
@@ -39,7 +39,12 @@ resource "aws_api_gateway_rest_api" "api" {
     openapi = "3.0.1"
     paths   = local.openAPI_spec
   })
-  policy = data.aws_iam_policy_document.resource_policy[0].json
+}
+
+resource "aws_api_gateway_rest_api_policy" "policy" {
+  count = try(var.trigger.resource_policy, null ) != null ? 1 : 0
+  policy      = data.aws_iam_policy_document.resource_policy[0].json
+  rest_api_id = aws_api_gateway_rest_api.api.id
 }
 
 locals {
