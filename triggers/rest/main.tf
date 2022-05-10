@@ -39,12 +39,12 @@ resource "aws_api_gateway_rest_api" "api" {
     openapi = "3.0.1"
     paths   = local.openAPI_spec
   })
-  policy = data.aws_iam_policy_document.resource_policy.json
+  policy = data.aws_iam_policy_document.resource_policy[0].json
 }
 
 locals {
   body = jsonencode(aws_api_gateway_rest_api.api.body)
-  redeployment_sha = var.trigger.resource_policy != null ? sha1( "${local.body}_${jsonencode(data.aws_iam_policy_document.resource_policy.json)}") : sha1(local.body)
+  redeployment_sha = var.trigger.resource_policy != null ? sha1( "${local.body}_${jsonencode(data.aws_iam_policy_document.resource_policy[0].json)}") : sha1(local.body)
 }
 
 resource "aws_api_gateway_deployment" "deployment" {
