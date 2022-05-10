@@ -42,7 +42,7 @@ resource "aws_api_gateway_rest_api" "api" {
 
 locals {
   body = jsonencode(aws_api_gateway_rest_api.api.body)
-  redeployment_sha = var.trigger.resource_policy != null ? sha1( "${local.body}_${jsonencode(aws_api_gateway_rest_api_policy.resource_policy[0].policy)}") : sha1(local.body)
+  redeployment_sha = var.trigger.resource_policy != null ? sha1( "${local.body},${jsonencode(jsondecode(aws_api_gateway_rest_api_policy.resource_policy[0].policy))}") : sha1(local.body)
 }
 
 resource "aws_api_gateway_deployment" "deployment" {
