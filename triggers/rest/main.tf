@@ -1,5 +1,9 @@
 data "aws_region" "current" {}
 data "aws_caller_identity" "account" {}
+data "aws_iam_policy_document" "resource_policy" {
+  count = try(var.trigger.resource_policy, null ) != null ? 1 : 0
+  source_json = var.trigger.resource_policy
+}
 
 locals {
 
@@ -35,14 +39,12 @@ resource "aws_api_gateway_rest_api" "api" {
     openapi = "3.0.1"
     paths   = local.openAPI_spec
   })
-  #   body = templatefile("${path.module}/openapi.tftpl", {routes: local.api_routes, lambda_invoke_arn: var.lambda_function_invoke_arn})
-
-
+  policy = data.aws_iam_policy_document.resource_policy.json
 }
 
 locals {
   body = jsonencode(aws_api_gateway_rest_api.api.body)
-  redeployment_sha = var.trigger.resource_policy != null ? sha1( "${local.body},${jsonencode(jsondecode(aws_api_gateway_rest_api_policy.resource_policy[0].policy))}") : sha1(local.body)
+  redeployment_sha = var.trigger.resource_policy != null ? sha1( "${local.body}_${jsonencode(data.aws_iam_policy_document.resource_policy.json)}") : sha1(local.body)
 }
 
 resource "aws_api_gateway_deployment" "deployment" {
@@ -82,14 +84,6 @@ resource "aws_api_gateway_stage" "stage" {
   }
 
 }
-
-resource "aws_api_gateway_rest_api_policy" "resource_policy" {
-  count = var.trigger.resource_policy != null ? 1 : 0
-
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  policy = var.trigger.resource_policy
-}
-
 
 resource "aws_cloudwatch_log_group" "apigateway_log_group" {
 
