@@ -2,7 +2,7 @@ data "aws_region" "current" {}
 data "aws_caller_identity" "account" {}
 data "aws_iam_policy_document" "resource_policy" {
   count = try(var.trigger.resource_policy, null ) != null ? 1 : 0
-  source_json = var.trigger.resource_policy
+  source_json = jsonencode(var.trigger.resource_policy)
 }
 
 locals {
