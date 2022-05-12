@@ -41,18 +41,18 @@ variable "architecture" {
 }
 
 variable "concurrent_execution" {
-  type = number
-  default = -1
+  type        = number
+  default     = -1
   description = "Amount of reserved concurrent executions for this lambda function. A value of 0 disables lambda from being triggered and -1 removes any concurrency limitations. Defaults to Unreserved Concurrency Limits -1"
 }
 
 variable "memory_size" {
   default     = 128
   type        = number
-  description = " Amount of memory in MB your Lambda Function can use at runtime. Valid values are 128, 256, 512, 1024. Defaults to 128."
+  description = " Amount of memory in MB your Lambda Function can use at runtime. Valid values are 128, 256, 512, 1024, 2048. Defaults to 128."
   validation {
-    condition     = var.memory_size == 128 || var.memory_size == 256 || var.memory_size == 512 || var.memory_size == 1024
-    error_message = "Invalid memory size, allowed values are 128, 256, 512, 1024."
+    condition     = contains( [128, 256, 512, 1024, 2048], var.memory_size )
+    error_message = "Invalid memory size, allowed values are 128, 256, 512, 1024, 2048."
   }
 }
 variable "timeout" {
@@ -80,7 +80,7 @@ variable "trigger" {
       type : string,
       existing_api_id : optional(string)
       disable_test_endpoint : optional(bool)
-      resource_policy: optional(string)
+      resource_policy : optional(string)
       cors_configuration : optional(object({
         allow_headers : set(string)
         allow_method : set(string)
@@ -135,8 +135,8 @@ variable "stage_name" {
 
 variable "iam_policies" {
   type = list(object({
-    actions    = list(string),
-    resources  = list(string)
+    actions   = list(string),
+    resources = list(string)
   }))
 
   default     = []
@@ -144,7 +144,7 @@ variable "iam_policies" {
 }
 
 variable "vpc_mode" {
-  type        = object({
+  type = object({
     id : string,
     subnet_ids : list(string)
     security_group = optional(object({
@@ -169,7 +169,7 @@ variable "vpc_mode" {
 }
 
 variable "alarm_topic" {
-  type = string
-  default = null
+  type        = string
+  default     = null
   description = "Topic for alarms notification"
 }
