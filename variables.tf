@@ -51,7 +51,7 @@ variable "memory_size" {
   type        = number
   description = " Amount of memory in MB your Lambda Function can use at runtime. Valid values are 128, 256, 512, 1024, 2048. Defaults to 128."
   validation {
-    condition     = contains( [128, 256, 512, 1024, 2048], var.memory_size )
+    condition     = contains( [128, 256, 512, 1024, 2048],  tonumber(var.memory_size) )
     error_message = "Invalid memory size, allowed values are 128, 256, 512, 1024, 2048."
   }
 }
