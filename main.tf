@@ -30,7 +30,7 @@ locals {
 
 
 data "archive_file" "files" {
-  count = local.source_zipped ? 0 : 1
+  count       = local.source_zipped ? 0 : 1
   type        = "zip"
   output_path = "${path.root}/lambda.zip"
 
@@ -66,7 +66,7 @@ resource "aws_iam_role" "function_role" {
   ]
 }
 EOF
-  tags               = var.tags
+
 }
 
 resource "aws_iam_role_policy" "function_logging_policy" {
@@ -104,15 +104,19 @@ resource "aws_iam_policy" "function_policy" {
     Version   = "2012-10-17"
     Statement = [
       {
-        Actions   = var.iam_policies[count.index].actions
+        Action   = var.iam_policies[count.index].actions
         Effect    = "Allow"
-        Principal = var.iam_policies[count.index].principal
-        Resource  = var.iam_policies[count.index].resource
+        Resource  = var.iam_policies[count.index].resources
       }
     ]
   })
 }
 
+resource "aws_iam_role_policy_attachment" "function_policy_attach" {
+  count      = length(var.iam_policies)
+  role       = aws_iam_role.function_role.name
+  policy_arn = aws_iam_policy.function_policy[count.index].arn
+}
 
 data "aws_iam_policy" "vpc_access_policy" {
   count = var.vpc_mode != null ? 1 : 0
@@ -156,7 +160,9 @@ resource "aws_lambda_function" "function" {
 
   s3_bucket        = aws_s3_bucket.lambda_bucket.id
   s3_key           = aws_s3_bucket_object.lambda_zip.key
-  source_code_hash = local.source_zipped ? filebase64sha256(var.source_dir): data.archive_file.files[0].output_base64sha256
+  reserved_concurrent_executions = var.concurrent_execution
+
+  source_code_hash = local.source_zipped ? filebase64sha256(var.source_dir) : data.archive_file.files[0].output_base64sha256
 
   dynamic "environment" {
     for_each = length(keys(var.environment_variables)) == 0 ? [] : [true]
@@ -179,21 +185,42 @@ resource "aws_lambda_function" "function" {
       subnet_ids         = var.vpc_mode.subnet_ids
     }
   }
-
-  tags = var.tags
-
 }
 
 resource "aws_security_group" "lambda_security_group" {
   count  = var.vpc_mode != null ? 1 : 0
   vpc_id = var.vpc_mode.id
+
+  dynamic "ingress" {
+    for_each = try(var.vpc_mode.security_group.ingress == null ? [] : var.vpc_mode.security_group.ingress, [])
+    content {
+      description      = "Lambda sg"
+      from_port        = ingress.value.from_port
+      to_port          = ingress.value.to_port
+      protocol         = ingress.value.protocol
+      cidr_blocks      = try((ingress.value.cidr_blocks) > 0 ? ingress.value.cidr_blocks : [], [])
+      security_groups  = try((ingress.value.security_groups) > 0 ? ingress.value.security_groups : [], [])
+    }
+  }
+
+  dynamic "egress" {
+    for_each = try(var.vpc_mode.security_group.egress == null ? [] : var.vpc_mode.security_group.egress, [])
+    content {
+      description      = "Lambda sg"
+      from_port        = egress.value.from_port
+      to_port          = egress.value.to_port
+      protocol         = egress.value.protocol
+      cidr_blocks      = try(length(egress.value.cidr_blocks) > 0 ? egress.value.cidr_blocks : [], [])
+      security_groups  = try(length(egress.value.security_groups) > 0 ? egress.value.security_groups : [], [])
+    }
+  }
 }
 
 resource "aws_cloudwatch_log_group" "lambda_log_group" {
 
   name              = "/aws/lambda/${var.lambda_name}"
   retention_in_days = var.log_retention
-  tags              = var.tags
+
 }
 
 ## TRIGGERS
@@ -212,11 +239,12 @@ module "trigger_rest" {
   depends_on                 = [aws_lambda_function.function]
   count                      = try (var.trigger.apigateway.type == "REST" ? 1 : 0, 0)
   source                     = "./triggers/rest"
-  stage_name                = var.stage_name
+  stage_name                 = var.stage_name
   lambda_function_invoke_arn = aws_lambda_function.function.invoke_arn
   lambda_function_name       = var.lambda_name
   timeout_milliseconds       = var.timeout != null ? var.timeout * 1000 : null
   trigger                    = var.trigger.apigateway
+  tracing_enabled            = var.tracing_mode != null ? true : false
 }
 
 ## HTTP
@@ -224,9 +252,25 @@ module "trigger_http" {
   depends_on                 = [aws_lambda_function.function]
   count                      = try(var.trigger.apigateway.type == "HTTP" ? 1 : 0, 0)
   source                     = "./triggers/http"
-  stage_name                = var.stage_name
+  stage_name                 = var.stage_name
   lambda_function_invoke_arn = aws_lambda_function.function.invoke_arn
   lambda_function_name       = var.lambda_name
   timeout_milliseconds       = var.timeout != null ? var.timeout * 1000 : null
   trigger                    = var.trigger.apigateway
+}
+
+## Alarms
+resource "aws_cloudwatch_metric_alarm" "errors_count_alarm" {
+  count               = var.alarm_topic != null ? 1 : 0
+  alarm_name          = "${var.lambda_name}-errors-alarm"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = "120"
+  statistic           = "Sum"
+  threshold           = "1"
+  alarm_description   = "Lambda ${var.lambda_name} errors count"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [var.alarm_topic]
 }
