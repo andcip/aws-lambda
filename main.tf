@@ -259,7 +259,6 @@ module "trigger_http" {
   trigger                    = var.trigger.apigateway
 }
 
-## Alarms
 resource "aws_cloudwatch_metric_alarm" "errors_count_alarm" {
   count               = var.alarm_topic != null ? 1 : 0
   alarm_name          = "${var.lambda_name}-errors-alarm"
@@ -267,10 +266,13 @@ resource "aws_cloudwatch_metric_alarm" "errors_count_alarm" {
   evaluation_periods  = "1"
   metric_name         = "Errors"
   namespace           = "AWS/Lambda"
-  period              = "120"
+  period              = try(var.alarm_metric.period, "120")
   statistic           = "Sum"
-  threshold           = "1"
+  threshold           = try(var.alarm_metric.threshold, "1")
   alarm_description   = "Lambda ${var.lambda_name} errors count"
   treat_missing_data  = "notBreaching"
   alarm_actions       = [var.alarm_topic]
+  dimensions = {
+    FunctionName = aws_lambda_function.function.function_name
+  }
 }

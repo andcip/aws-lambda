@@ -173,3 +173,11 @@ variable "alarm_topic" {
   default     = null
   description = "Topic for alarms notification"
 }
+
+variable "alarm_metric" {
+  default = null
+  type = object({
+    threshold = string
+    period = string
+  })
+}
