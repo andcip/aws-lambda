@@ -1,7 +1,3 @@
-terraform {
-  experiments = [module_variable_optional_attrs]
-}
-
 variable "lambda_name" {
   type        = string
   description = "The lambda name and anything else."

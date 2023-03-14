@@ -1,7 +1,3 @@
-terraform {
-  experiments = [module_variable_optional_attrs]
-}
-
 variable "trigger" {
   type = object({
     existing_api_id: optional(string)

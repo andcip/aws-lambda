@@ -1,7 +1,5 @@
 ## General Serverless module to deploy a lambda application
 
-#TODO: Lambda permission, add all triggers ( apig, alb, SNS, cognito, etc)
-
 data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
@@ -12,14 +10,20 @@ resource "random_integer" "bucket_salt" {
 }
 
 resource "aws_s3_bucket" "lambda_bucket" {
-  bucket        = "${var.lambda_name}-lambdaform-bucket-${random_integer.bucket_salt.result}"
-  acl           = "private"
+  bucket        = "${var.lambda_name}-aws-lambda-bucket-${random_integer.bucket_salt.result}"
   force_destroy = true
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
+}
+
+resource "aws_s3_bucket_acl" "lambda_bucket_acl" {
+  bucket = aws_s3_bucket.lambda_bucket
+  acl = "private"
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "lambda_bucket_encryption" {
+  bucket = aws_s3_bucket.lambda_bucket
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
     }
   }
 }
@@ -39,7 +43,7 @@ data "archive_file" "files" {
   source_dir = var.source_dir
 }
 
-resource "aws_s3_bucket_object" "lambda_zip" {
+resource "aws_s3_object" "lambda_zip" {
 
   bucket = aws_s3_bucket.lambda_bucket.id
   key    = "${var.lambda_name}.zip"
@@ -123,7 +127,6 @@ data "aws_iam_policy" "vpc_access_policy" {
   arn   = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
-## DA PROVARE
 data "aws_iam_policy" "xray_enable_policy" {
   count = var.tracing_mode != null ? 1 : 0
   arn   = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
@@ -145,7 +148,7 @@ resource "aws_iam_role_policy_attachment" "vpc_policy_attachment" {
 resource "aws_lambda_function" "function" {
 
   depends_on = [
-    aws_s3_bucket_object.lambda_zip,
+    aws_s3_object.lambda_zip,
     aws_cloudwatch_log_group.lambda_log_group
   ]
 
@@ -159,7 +162,7 @@ resource "aws_lambda_function" "function" {
   role          = aws_iam_role.function_role.arn
 
   s3_bucket        = aws_s3_bucket.lambda_bucket.id
-  s3_key           = aws_s3_bucket_object.lambda_zip.key
+  s3_key           = aws_s3_object.lambda_zip.key
   reserved_concurrent_executions = var.concurrent_execution
 
   source_code_hash = local.source_zipped ? filebase64sha256(var.source_dir) : data.archive_file.files[0].output_base64sha256
